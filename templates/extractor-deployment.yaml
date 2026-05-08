@@ -1,0 +1,93 @@
+{{- if .Values.extractor.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "intentgate.extractor.fullname" . }}
+  labels:
+    {{- include "intentgate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: extractor
+spec:
+  replicas: {{ .Values.extractor.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "intentgate.extractor.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "intentgate.labels" . | nindent 8 }}
+        app.kubernetes.io/component: extractor
+        {{- with .Values.extractor.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.extractor.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "intentgate.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: extractor
+          image: {{ include "intentgate.extractor.image" . | quote }}
+          imagePullPolicy: {{ .Values.extractor.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8090
+              protocol: TCP
+          env:
+            {{- if .Values.extractor.stubMode }}
+            - name: EXTRACTOR_STUB
+              value: "true"
+            {{- end }}
+            {{- if .Values.extractor.model }}
+            - name: EXTRACTOR_MODEL
+              value: {{ .Values.extractor.model | quote }}
+            {{- end }}
+            {{- if and (not .Values.extractor.stubMode) (or .Values.extractor.anthropicApiKey .Values.extractor.existingApiKeySecret) }}
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "intentgate.extractor.apiKeySecretName" . }}
+                  key: {{ .Values.extractor.apiKeySecretKey }}
+            {{- end }}
+            {{- with .Values.extractor.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 1
+            periodSeconds: 5
+            timeoutSeconds: 2
+          resources:
+            {{- toYaml .Values.extractor.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+      {{- with .Values.extractor.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.extractor.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.extractor.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end -}}

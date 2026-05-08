@@ -1,0 +1,120 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "intentgate.gateway.fullname" . }}
+  labels:
+    {{- include "intentgate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+spec:
+  replicas: {{ .Values.gateway.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "intentgate.gateway.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "intentgate.labels" . | nindent 8 }}
+        app.kubernetes.io/component: gateway
+        {{- with .Values.gateway.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.gateway.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "intentgate.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: gateway
+          image: {{ include "intentgate.gateway.image" . | quote }}
+          imagePullPolicy: {{ .Values.gateway.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: INTENTGATE_ADDR
+              value: ":8080"
+            - name: INTENTGATE_REQUIRE_CAPABILITY
+              value: {{ .Values.gateway.requireCapability | quote }}
+            - name: INTENTGATE_REQUIRE_INTENT
+              value: {{ .Values.gateway.requireIntent | quote }}
+            - name: INTENTGATE_REQUIRE_BUDGET
+              value: {{ .Values.gateway.requireBudget | quote }}
+            - name: INTENTGATE_AUDIT_TARGET
+              value: {{ .Values.gateway.auditTarget | quote }}
+            {{- if .Values.extractor.enabled }}
+            - name: INTENTGATE_EXTRACTOR_URL
+              value: "http://{{ include "intentgate.extractor.fullname" . }}:{{ .Values.extractor.service.port }}"
+            {{- end }}
+            {{- if .Values.redisUrl }}
+            - name: INTENTGATE_REDIS_URL
+              value: {{ .Values.redisUrl | quote }}
+            {{- end }}
+            {{- if .Values.gateway.policy }}
+            - name: INTENTGATE_POLICY_FILE
+              value: /etc/intentgate/policy/policy.rego
+            {{- else if .Values.gateway.existingPolicyConfigMap }}
+            - name: INTENTGATE_POLICY_FILE
+              value: /etc/intentgate/policy/policy.rego
+            {{- end }}
+            {{- if or .Values.gateway.masterKey .Values.gateway.existingMasterKeySecret }}
+            - name: INTENTGATE_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "intentgate.masterKeySecretName" . }}
+                  key: {{ .Values.gateway.masterKeySecretKey }}
+            {{- end }}
+            {{- with .Values.gateway.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if or .Values.gateway.policy .Values.gateway.existingPolicyConfigMap }}
+          volumeMounts:
+            - name: policy
+              mountPath: /etc/intentgate/policy
+              readOnly: true
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 1
+            periodSeconds: 5
+            timeoutSeconds: 2
+          resources:
+            {{- toYaml .Values.gateway.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+      {{- if or .Values.gateway.policy .Values.gateway.existingPolicyConfigMap }}
+      volumes:
+        - name: policy
+          configMap:
+            name: {{ include "intentgate.policyConfigMapName" . }}
+      {{- end }}
+      {{- with .Values.gateway.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.gateway.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.gateway.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

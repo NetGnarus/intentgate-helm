@@ -1,0 +1,18 @@
+{{- if .Values.extractor.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "intentgate.extractor.fullname" . }}
+  labels:
+    {{- include "intentgate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: extractor
+spec:
+  type: {{ .Values.extractor.service.type }}
+  ports:
+    - port: {{ .Values.extractor.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "intentgate.extractor.matchLabels" . | nindent 4 }}
+{{- end -}}

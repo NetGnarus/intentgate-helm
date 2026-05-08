@@ -1,0 +1,4 @@
+# Helm packaging output
+*.tgz
+charts/
+.DS_Store

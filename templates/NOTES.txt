@@ -1,0 +1,98 @@
+IntentGate {{ .Chart.AppVersion }} installed as release "{{ .Release.Name }}".
+
+==============================================================================
+What's deployed
+==============================================================================
+
+Gateway:        {{ include "intentgate.gateway.fullname" . }}    (Service :{{ .Values.gateway.service.port }})
+{{- if .Values.extractor.enabled }}
+Extractor:      {{ include "intentgate.extractor.fullname" . }}  (Service :{{ .Values.extractor.service.port }}, {{ if .Values.extractor.stubMode }}stub mode{{ else }}Anthropic mode{{ end }})
+{{- else }}
+Extractor:      disabled
+{{- end }}
+{{- if .Values.redisUrl }}
+Budget store:   Redis at {{ .Values.redisUrl }}
+{{- else }}
+Budget store:   in-memory (single-replica only)
+{{- end }}
+
+Strict-mode flags:
+  capability: {{ .Values.gateway.requireCapability }}
+  intent:     {{ .Values.gateway.requireIntent }}
+  budget:     {{ .Values.gateway.requireBudget }}
+  audit:      {{ .Values.gateway.auditTarget }}
+
+==============================================================================
+Verify the install
+==============================================================================
+
+1) Wait for the gateway to be ready:
+
+     kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "intentgate.gateway.fullname" . }}
+
+2) Port-forward to your laptop and hit the health endpoint:
+
+     kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "intentgate.gateway.fullname" . }} 8080:{{ .Values.gateway.service.port }} &
+     curl -s http://localhost:8080/healthz
+
+   You should see: {"status":"ok","version":"{{ .Chart.AppVersion }}"}
+
+3) Tail the gateway logs (audit events appear here):
+
+     kubectl -n {{ .Release.Namespace }} logs -f deploy/{{ include "intentgate.gateway.fullname" . }}
+
+==============================================================================
+Mint a token and exercise the pipeline
+==============================================================================
+
+The gateway accepts /v1/mcp tools/call requests with an Authorization
+Bearer token. Tokens are minted by the `igctl` CLI from the gateway
+repo. To mint one against THIS deployment's master key:
+
+{{- if .Values.gateway.masterKey }}
+
+  # The chart wrote your inline masterKey into a Secret. Read it back:
+  export INTENTGATE_MASTER_KEY=$(kubectl -n {{ .Release.Namespace }} get secret {{ include "intentgate.masterKeySecretName" . }} -o jsonpath="{.data.{{ .Values.gateway.masterKeySecretKey }}}" | base64 -d)
+
+{{- else if .Values.gateway.existingMasterKeySecret }}
+
+  # You supplied an existing Secret; read it the same way:
+  export INTENTGATE_MASTER_KEY=$(kubectl -n {{ .Release.Namespace }} get secret {{ include "intentgate.masterKeySecretName" . }} -o jsonpath="{.data.{{ .Values.gateway.masterKeySecretKey }}}" | base64 -d)
+
+{{- else }}
+
+  # No masterKey was set: the gateway generated an ephemeral one at startup
+  # and logged it. Find it in the pod logs:
+  kubectl -n {{ .Release.Namespace }} logs deploy/{{ include "intentgate.gateway.fullname" . }} | grep ephemeral_key_b64
+
+  # Then export the value:
+  export INTENTGATE_MASTER_KEY=<paste-the-key>
+
+{{- end }}
+
+  # Mint a 1-hour token (igctl from the gateway repo):
+  TOKEN=$(./bin/igctl mint --subject finance-copilot-v3 --ttl 1h --max-calls 10)
+
+  # Exercise the pipeline (port-forward must be running):
+  curl -sX POST http://localhost:8080/v1/mcp \
+    -H 'Content-Type: application/json' \
+    -H "Authorization: Bearer $TOKEN" \
+    -H 'X-Intent-Prompt: Process today AP invoices' \
+    -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"read_invoice","arguments":{"id":"123"}}}' \
+    | jq .
+
+==============================================================================
+Where to look next
+==============================================================================
+
+- Audit events:       kubectl logs deploy/{{ include "intentgate.gateway.fullname" . }} | grep '"event":"intentgate.tool_call"'
+- Gateway README:     https://github.com/NetGnarus/intentgate-gateway
+- Python SDK:         pip install intentgate
+- Customer policies:  set values.gateway.policy or values.gateway.existingPolicyConfigMap
+
+For production:
+  - Set values.gateway.requireCapability=true (and the others as needed).
+  - Provide values.gateway.masterKey or existingMasterKeySecret.
+  - Point values.redisUrl at a real Redis (multi-replica safe).
+  - Replace stub extractor with Anthropic by setting values.extractor.stubMode=false
+    and values.extractor.anthropicApiKey (or existingApiKeySecret).

@@ -1,0 +1,18 @@
+{{/*
+Policy ConfigMap. Only rendered when the user supplied an inline
+.Values.gateway.policy. If they pointed at an existingPolicyConfigMap
+or left both empty (using the embedded default), this template emits
+nothing.
+*/}}
+{{- if and (not .Values.gateway.existingPolicyConfigMap) .Values.gateway.policy -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "intentgate.policyConfigMapName" . }}
+  labels:
+    {{- include "intentgate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+data:
+  policy.rego: |
+{{ .Values.gateway.policy | indent 4 }}
+{{- end -}}

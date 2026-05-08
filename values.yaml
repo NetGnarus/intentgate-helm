@@ -1,0 +1,151 @@
+# Default values for the intentgate chart.
+#
+# Every section below corresponds to one component or one cross-cutting
+# concern. Override only what you need; the defaults aim to be a working
+# single-replica dev install.
+
+# -- Override the chart's full name (default: <release>-<chart>).
+fullnameOverride: ""
+# -- Override the chart's name (default: chart name from Chart.yaml).
+nameOverride: ""
+
+# -----------------------------------------------------------------------
+# Gateway (the Go binary, all four checks)
+# -----------------------------------------------------------------------
+gateway:
+  # -- Number of gateway replicas. Set >1 only with INTENTGATE_REDIS_URL
+  # set; the in-memory budget store is single-replica only.
+  replicaCount: 1
+
+  image:
+    repository: ghcr.io/netgnarus/intentgate-gateway
+    tag: ""             # "" -> chart appVersion
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8080
+    # -- ClusterIP service annotations.
+    annotations: {}
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+  # Strict mode toggles. v0.1 default is permissive (everything skipped
+  # if missing) so a fresh install works out of the box. Production
+  # should flip these on.
+  requireCapability: false
+  requireIntent:     false
+  requireBudget:     false
+
+  # -- Audit destination. "stdout" emits one JSON event per line on
+  # the container stdout; "none" disables emission.
+  auditTarget: stdout
+
+  # Master key for capability tokens. Provide one of:
+  #   masterKey:      "<base64url string>"  (chart writes it into a Secret)
+  #   existingSecret: "<name>"              (chart references an existing Secret)
+  # If both are empty, the gateway generates an ephemeral key at startup
+  # (logged once; tokens won't survive a pod restart).
+  masterKey: ""
+  existingMasterKeySecret: ""
+  # Key inside the Secret holding the base64url master key. Default
+  # works for both chart-managed and pre-existing Secrets.
+  masterKeySecretKey: master-key
+
+  # Customer Rego policy. Two options:
+  #   policy: |
+  #     package intentgate.policy
+  #     ...
+  # OR
+  #   existingPolicyConfigMap: "<configmap-name>" with a "policy.rego" key.
+  # If both empty, the gateway uses its embedded default policy.
+  policy: ""
+  existingPolicyConfigMap: ""
+
+  # -- Extra env vars passed verbatim to the gateway container.
+  extraEnv: []
+  # - name: INTENTGATE_LOG_LEVEL
+  #   value: debug
+
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# -----------------------------------------------------------------------
+# Extractor (the Python intent service)
+# -----------------------------------------------------------------------
+extractor:
+  # -- Set false to skip deploying the extractor entirely. Useful when
+  # the gateway is configured against an external extractor URL.
+  enabled: true
+
+  replicaCount: 1
+
+  image:
+    repository: ghcr.io/netgnarus/intentgate-extractor
+    tag: ""
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8090
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+
+  # When true, the extractor uses the offline heuristic ("stub" mode)
+  # and does NOT call Anthropic. No API key required. Use for dev,
+  # CI, and air-gapped tryouts.
+  stubMode: true
+
+  # Anthropic API key for production extraction. Either inline (chart
+  # writes a Secret) or via an existing Secret name. Ignored when
+  # stubMode is true.
+  anthropicApiKey: ""
+  existingApiKeySecret: ""
+  apiKeySecretKey: ANTHROPIC_API_KEY
+
+  # -- Override the model. Defaults to whatever the extractor binary's
+  # default is (claude-haiku-4-5-... at the time of v0.1).
+  model: ""
+
+  extraEnv: []
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# -----------------------------------------------------------------------
+# Cross-cutting
+# -----------------------------------------------------------------------
+
+# Redis is NOT bundled by this chart. Either:
+#   - leave redisUrl empty: gateway uses an in-memory budget store
+#     (single-replica only, counters reset on restart), or
+#   - point at a Redis you already operate (cluster's bitnami subchart,
+#     external managed Redis, etc.)
+redisUrl: ""
+
+# ServiceAccount the gateway and extractor pods run under.
+serviceAccount:
+  create: true
+  name: ""        # "" -> derived from fullname
+  annotations: {} # for IRSA / Workload Identity bindings
+
+# -- Image pull secrets shared by both components.
+imagePullSecrets: []
+# - name: ghcr-credentials
