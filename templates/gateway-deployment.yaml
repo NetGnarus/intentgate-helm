@@ -98,6 +98,12 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsNonRoot: true
+            # 65532 is the well-known UID of the "nonroot" user in
+            # gcr.io/distroless/static:nonroot (the gateway's runtime
+            # base image). Setting it explicitly here lets the kubelet
+            # validate runAsNonRoot without inspecting the image.
+            runAsUser: 65532
+            runAsGroup: 65532
             capabilities:
               drop: ["ALL"]
       {{- if or .Values.gateway.policy .Values.gateway.existingPolicyConfigMap }}

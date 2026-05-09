@@ -76,6 +76,13 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsNonRoot: true
+            # 1000 matches the `useradd --system --uid 1000 extractor`
+            # in the extractor Dockerfile. Setting it explicitly here
+            # lets the kubelet validate runAsNonRoot without inspecting
+            # the image (which is required by k3s' Pod Security
+            # Standards "restricted" profile).
+            runAsUser: 1000
+            runAsGroup: 1000
             capabilities:
               drop: ["ALL"]
       {{- with .Values.extractor.nodeSelector }}

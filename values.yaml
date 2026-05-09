@@ -91,7 +91,10 @@ extractor:
 
   image:
     repository: ghcr.io/netgnarus/intentgate-extractor
-    tag: ""
+    # Pinned: extractor releases independently of the gateway/chart. Bump
+    # this only when a new extractor image is published. Empty would fall
+    # back to chart appVersion, which tracks the gateway.
+    tag: "0.1.0"
     pullPolicy: IfNotPresent
 
   service:
