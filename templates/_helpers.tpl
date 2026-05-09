@@ -117,6 +117,28 @@ Anthropic API-key Secret name (used by the extractor when stubMode=false).
 {{- end -}}
 
 {{/*
+Admin-token Secret name (used by /v1/admin/* auth).
+*/}}
+{{- define "intentgate.adminTokenSecretName" -}}
+{{- if .Values.gateway.existingAdminTokenSecret -}}
+{{- .Values.gateway.existingAdminTokenSecret -}}
+{{- else -}}
+{{- printf "%s-admin-token" (include "intentgate.gateway.fullname" .) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Postgres URL Secret name (used by the revocation store).
+*/}}
+{{- define "intentgate.postgresUrlSecretName" -}}
+{{- if .Values.existingPostgresUrlSecret -}}
+{{- .Values.existingPostgresUrlSecret -}}
+{{- else -}}
+{{- printf "%s-postgres-url" (include "intentgate.gateway.fullname" .) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Resolved image references. Empty tag falls through to .Chart.AppVersion
 so a chart upgrade tracks the appVersion bump automatically.
 */}}

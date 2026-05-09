@@ -58,6 +58,15 @@ gateway:
   # works for both chart-managed and pre-existing Secrets.
   masterKeySecretKey: master-key
 
+  # Admin token guarding the gateway's /v1/admin/* endpoints (token
+  # revocation, revocation list). Same shape as masterKey: provide
+  # inline OR reference an existing Secret. If both are empty, the
+  # admin endpoints are not registered (404s); the operator must use
+  # `igctl revoke` only after configuring this.
+  adminToken: ""
+  existingAdminTokenSecret: ""
+  adminTokenSecretKey: admin-token
+
   # Customer Rego policy. Two options:
   #   policy: |
   #     package intentgate.policy
@@ -142,6 +151,15 @@ extractor:
 #   - point at a Redis you already operate (cluster's bitnami subchart,
 #     external managed Redis, etc.)
 redisUrl: ""
+
+# Postgres is NOT bundled. Used for the revocation store (durable,
+# multi-replica safe). Leave empty to fall back to an in-memory store
+# (single-replica only, lost on restart). Provide either:
+#   - postgresUrl: "postgres://user:pass@host:5432/db"  (inline; chart writes a Secret)
+#   - existingPostgresUrlSecret: "<name>"               (chart references an existing Secret)
+postgresUrl: ""
+existingPostgresUrlSecret: ""
+postgresUrlSecretKey: postgres-url
 
 # ServiceAccount the gateway and extractor pods run under.
 serviceAccount:

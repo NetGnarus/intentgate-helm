@@ -55,6 +55,20 @@ spec:
             - name: INTENTGATE_REDIS_URL
               value: {{ .Values.redisUrl | quote }}
             {{- end }}
+            {{- if or .Values.postgresUrl .Values.existingPostgresUrlSecret }}
+            - name: INTENTGATE_POSTGRES_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "intentgate.postgresUrlSecretName" . }}
+                  key: {{ .Values.postgresUrlSecretKey }}
+            {{- end }}
+            {{- if or .Values.gateway.adminToken .Values.gateway.existingAdminTokenSecret }}
+            - name: INTENTGATE_ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "intentgate.adminTokenSecretName" . }}
+                  key: {{ .Values.gateway.adminTokenSecretKey }}
+            {{- end }}
             {{- if .Values.gateway.policy }}
             - name: INTENTGATE_POLICY_FILE
               value: /etc/intentgate/policy/policy.rego
