@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: helm lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.17.0
+
+      - name: helm lint (default values)
+        run: helm lint .
+
+      - name: helm lint (production-style values)
+        run: helm lint . -f tests/values-prod.yaml
+
+  template:
+    name: helm template + kubeconform
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.17.0
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL -o /tmp/kc.tar.gz \
+            https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz
+          tar -xzf /tmp/kc.tar.gz -C /tmp
+          sudo mv /tmp/kubeconform /usr/local/bin/
+          kubeconform -v
+
+      - name: Render and validate (default values)
+        run: |
+          helm template intentgate . > /tmp/manifests-default.yaml
+          kubeconform -strict -summary -kubernetes-version 1.29.0 /tmp/manifests-default.yaml
+
+      - name: Render and validate (production-style values)
+        run: |
+          helm template intentgate . -f tests/values-prod.yaml > /tmp/manifests-prod.yaml
+          kubeconform -strict -summary -kubernetes-version 1.29.0 /tmp/manifests-prod.yaml
+
+      - name: Show rendered diff between default and prod
+        run: |
+          diff -u /tmp/manifests-default.yaml /tmp/manifests-prod.yaml | head -200 || true

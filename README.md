@@ -1,10 +1,21 @@
 # IntentGate Helm chart
 
+[![CI](https://github.com/NetGnarus/intentgate-helm/actions/workflows/ci.yml/badge.svg)](https://github.com/NetGnarus/intentgate-helm/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Helm chart](https://img.shields.io/badge/ghcr.io-charts%2Fintentgate-2188ff.svg)](https://github.com/NetGnarus/intentgate-helm/pkgs/container/charts%2Fintentgate)
+
 Deploys the [IntentGate gateway](https://github.com/NetGnarus/intentgate-gateway)
 and (optionally) the [intent extractor](https://github.com/NetGnarus/intentgate-extractor)
 into a Kubernetes cluster.
 
-License: **Apache 2.0**.
+## Companion repositories
+
+| Repo | Purpose |
+| ---- | ------- |
+| [intentgate-gateway](https://github.com/NetGnarus/intentgate-gateway) | Go gateway with the four-check pipeline. Deployed by this chart. |
+| [intentgate-extractor](https://github.com/NetGnarus/intentgate-extractor) | Optional FastAPI service for intent extraction. Deployed by this chart when `extractor.enabled: true`. |
+| [intentgate-sdk-python](https://github.com/NetGnarus/intentgate-sdk-python) | Python SDK that talks to the deployed gateway. |
+| [intentgate-helm](https://github.com/NetGnarus/intentgate-helm) | This chart. |
 
 ## What it deploys
 
@@ -26,10 +37,32 @@ chart.
 - (Optional) Redis if you want multi-replica budget enforcement
 - (Optional) An Anthropic API key if you want production-quality intent extraction
 
-## Quick start (single-replica dev)
+## Install from the OCI registry
+
+The chart is published to GHCR as an OCI artifact on every `vX.Y.Z` git
+tag. Helm 3.7+ pulls from OCI directly:
 
 ```sh
-helm install intentgate ./helm \
+helm install intentgate oci://ghcr.io/netgnarus/charts/intentgate \
+  --version 0.1.0 \
+  --namespace intentgate --create-namespace
+```
+
+To pin to the latest published minor:
+
+```sh
+helm install intentgate oci://ghcr.io/netgnarus/charts/intentgate \
+  --version "~0.1" \
+  --namespace intentgate --create-namespace
+```
+
+Available versions: https://github.com/NetGnarus/intentgate-helm/pkgs/container/charts%2Fintentgate
+
+## Quick start from source (single-replica dev)
+
+```sh
+git clone https://github.com/NetGnarus/intentgate-helm.git
+helm install intentgate ./intentgate-helm \
   --namespace intentgate --create-namespace
 ```
 
@@ -141,6 +174,32 @@ By design, the chart stays minimal:
   GitOps overlays. The basic Deployment shape is HPA-friendly.
 - **No control plane.** The commercial `intentgate-private/control-plane`
   chart is a separate install.
+
+## Develop locally
+
+```sh
+helm lint .
+helm template intentgate . | kubeconform -strict -summary -
+helm template intentgate . -f tests/values-prod.yaml | kubeconform -strict -summary -
+```
+
+`tests/values-prod.yaml` exercises the production-style toggles
+(strict mode on, inline policy, inline keys) so CI can validate the
+"production" code path renders valid Kubernetes manifests.
+
+CI runs both renderings on every PR — see `.github/workflows/ci.yml`.
+
+## Contributing
+
+Apache 2.0 and welcomes community contributions. A formal `CONTRIBUTING.md`
+is coming with the v0.1 → v1.0 polish pass. For now, please open an
+issue to discuss any non-trivial change before sending a PR.
+
+## Security
+
+If you find a security vulnerability, please **do not** open a public
+issue. Email security@netgnarus.com (or open a GitHub Security Advisory
+on this repo) and we'll respond within two business days.
 
 ## Production hardening checklist
 

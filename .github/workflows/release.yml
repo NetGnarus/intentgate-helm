@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v0.1.0). Must already exist on the repo.'
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  CHART_REPO: netgnarus/charts
+
+jobs:
+  publish:
+    name: Package and push chart to GHCR OCI
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Resolve version
+        id: version
+        run: |
+          ref="${{ inputs.tag || github.ref_name }}"
+          ref="${ref#refs/tags/}"
+          bare="${ref#v}"
+          echo "tag=$ref"   >> "$GITHUB_OUTPUT"
+          echo "bare=$bare" >> "$GITHUB_OUTPUT"
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.17.0
+
+      - name: Verify chart version matches tag
+        run: |
+          chart_version="$(helm show chart . | awk '/^version:/ {print $2}')"
+          want="${{ steps.version.outputs.bare }}"
+          if [ "$chart_version" != "$want" ]; then
+            echo "::error::Chart.yaml version ($chart_version) doesn't match tag (v$want). Bump Chart.yaml's 'version:' field before tagging."
+            exit 1
+          fi
+          echo "Chart version $chart_version matches tag v$want"
+
+      - name: helm lint (default values)
+        run: helm lint .
+
+      - name: helm lint (production-style values)
+        run: helm lint . -f tests/values-prod.yaml
+
+      - name: Package chart
+        run: |
+          mkdir -p out
+          helm package . --destination out
+          ls -lh out/
+
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} \
+            --username "${{ github.actor }}" --password-stdin
+
+      - name: Push chart to OCI registry
+        id: push
+        run: |
+          tarball="$(ls out/*.tgz | head -1)"
+          echo "Pushing $tarball to oci://${{ env.REGISTRY }}/${{ env.CHART_REPO }}"
+          helm push "$tarball" "oci://${{ env.REGISTRY }}/${{ env.CHART_REPO }}"
+
+      - name: Summary
+        run: |
+          {
+            echo "## Released chart \`${{ steps.version.outputs.tag }}\`"
+            echo
+            echo "**OCI ref:** \`oci://${{ env.REGISTRY }}/${{ env.CHART_REPO }}/intentgate\`"
+            echo
+            echo "**Install:**"
+            echo '```sh'
+            echo "helm install intentgate \\"
+            echo "  oci://${{ env.REGISTRY }}/${{ env.CHART_REPO }}/intentgate \\"
+            echo "  --version ${{ steps.version.outputs.bare }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,33 @@
+# Production-style values used by CI to render-test the strict code path
+# (every "if" branch in the templates exercised by either default values
+# or this file). Not intended to be used as a real install — keys are
+# placeholders.
+
+gateway:
+  replicaCount: 3
+  requireCapability: true
+  requireIntent: true
+  requireBudget: true
+  masterKey: "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"
+  policy: |
+    package intentgate.policy
+    import rego.v1
+    default decision := {"allow": false, "reason": "default deny"}
+    decision := {"allow": true, "reason": "read-only"} if startswith(input.tool, "read_")
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits:   { cpu: 1000m, memory: 512Mi }
+
+extractor:
+  enabled: true
+  replicaCount: 2
+  stubMode: false
+  anthropicApiKey: "sk-ant-api03-PLACEHOLDER"
+
+redisUrl: "redis://redis-master.redis.svc.cluster.local:6379/0"
+
+imagePullSecrets:
+  - name: ghcr-pull
