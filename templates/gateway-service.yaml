@@ -5,9 +5,16 @@ metadata:
   labels:
     {{- include "intentgate.labels" . | nindent 4 }}
     app.kubernetes.io/component: gateway
-  {{- with .Values.gateway.service.annotations }}
+  {{- if or .Values.gateway.service.annotations .Values.gateway.metrics.enabled }}
   annotations:
+    {{- if .Values.gateway.metrics.enabled }}
+    prometheus.io/scrape: "true"
+    prometheus.io/port: {{ .Values.gateway.service.port | quote }}
+    prometheus.io/path: "/metrics"
+    {{- end }}
+    {{- with .Values.gateway.service.annotations }}
     {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- end }}
 spec:
   type: {{ .Values.gateway.service.type }}

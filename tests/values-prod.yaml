@@ -21,6 +21,10 @@ gateway:
     requests: { cpu: 100m, memory: 128Mi }
     limits:   { cpu: 1000m, memory: 512Mi }
   adminToken: "this-is-a-prod-style-admin-secret-not-real"
+  metrics:
+    enabled: true
+  tracing:
+    endpoint: "otel-collector.observability.svc.cluster.local:4317"
 
 extractor:
   enabled: true

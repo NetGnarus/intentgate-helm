@@ -67,6 +67,21 @@ gateway:
   existingAdminTokenSecret: ""
   adminTokenSecretKey: admin-token
 
+  # Observability. Both off by default — production deploys flip them on.
+  metrics:
+    # When true, registers GET /metrics on the public port (Prometheus
+    # scrape target) and stamps prometheus.io/scrape annotations on
+    # the Service so a default Prometheus operator picks the gateway
+    # up automatically. For stricter deploys, leave this off and
+    # expose /metrics through a sidecar / service mesh.
+    enabled: false
+  tracing:
+    # OTLP gRPC endpoint, e.g. "otel-collector.observability:4317".
+    # Empty disables tracing (no overhead). Standard OTEL_*
+    # environment variables in extraEnv layer on top of this for
+    # samplers, resource attributes, etc.
+    endpoint: ""
+
   # Customer Rego policy. Two options:
   #   policy: |
   #     package intentgate.policy

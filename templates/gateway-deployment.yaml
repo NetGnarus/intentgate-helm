@@ -69,6 +69,16 @@ spec:
                   name: {{ include "intentgate.adminTokenSecretName" . }}
                   key: {{ .Values.gateway.adminTokenSecretKey }}
             {{- end }}
+            {{- if .Values.gateway.metrics.enabled }}
+            - name: INTENTGATE_METRICS_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if .Values.gateway.tracing.endpoint }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.gateway.tracing.endpoint | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: "intentgate-gateway"
+            {{- end }}
             {{- if .Values.gateway.policy }}
             - name: INTENTGATE_POLICY_FILE
               value: /etc/intentgate/policy/policy.rego
