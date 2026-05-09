@@ -9,12 +9,13 @@ type: application
 
 # Chart version follows semver and is independent of appVersion.
 # Bump on chart-shape changes; bump appVersion on gateway image bumps.
-version: 0.1.1
+version: 0.1.2
 
 # The gateway/extractor image tag this chart's defaults reference.
-# v0.2.0 = gateway with the upstream tool-server proxy. Extractor stays
-# on 0.1.0 (no new release yet); pinned in values.yaml's extractor.image.tag.
-appVersion: "0.2.0"
+# v0.3.0 = gateway with token revocation (Postgres-backed) + admin API.
+# Extractor stays on 0.1.0 (no new release yet); pinned in values.yaml's
+# extractor.image.tag.
+appVersion: "0.3.0"
 
 home: https://github.com/NetGnarus/intentgate-gateway
 sources:
