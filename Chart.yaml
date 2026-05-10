@@ -9,17 +9,16 @@ type: application
 
 # Chart version follows semver and is independent of appVersion.
 # Bump on chart-shape changes; bump appVersion on gateway image bumps.
-version: 0.1.6
+version: 0.1.7
 
 # The gateway/extractor image tag this chart's defaults reference.
-# v0.8.0 = gateway with high-risk human-approval flow (escalate
-# decision, /v1/admin/approvals queue, memory + postgres backends),
-# on top of v0.7's capability attenuation.
-# v0.7 (capability v2) shipped without a chart bump; this bump
-# records the gateway sequence catching up.
+# v0.9.0 = gateway with multi-tenant foundation (token v3 with signed
+# tenant claim, audit schema v3 with tenant column, /v1/admin/audit
+# accepts tenant=). On top of v0.8's human-approval flow, v0.7's
+# capability attenuation, etc.
 # Extractor stays on 0.1.0 (no new release yet); pinned in values.yaml's
 # extractor.image.tag.
-appVersion: "0.8.0"
+appVersion: "0.9.0"
 
 home: https://github.com/NetGnarus/intentgate-gateway
 sources:
