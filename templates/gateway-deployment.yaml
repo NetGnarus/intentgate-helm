@@ -51,6 +51,10 @@ spec:
             - name: INTENTGATE_AUDIT_PERSIST
               value: "true"
             {{- end }}
+            {{- if .Values.gateway.auditArgValues }}
+            - name: INTENTGATE_AUDIT_PERSIST_ARG_VALUES
+              value: {{ .Values.gateway.auditArgValues | quote }}
+            {{- end }}
             {{- if .Values.gateway.approvalsBackend }}
             - name: INTENTGATE_APPROVALS_BACKEND
               value: {{ .Values.gateway.approvalsBackend | quote }}

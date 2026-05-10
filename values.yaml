@@ -55,6 +55,21 @@ gateway:
   # this in tandem with postgresUrl.
   auditPersist: false
 
+  # -- Whether to persist a REDACTED VIEW of tool-call argument
+  # values onto each audit event (audit schema v4, gateway 1.3+).
+  # Empty / "off" preserves the strict keys-only privacy posture used
+  # through gateway v1.2 — argument values never enter the audit log.
+  # "scalars" preserves numbers, booleans, and nulls verbatim while
+  # replacing strings, arrays-of-strings, and string-valued nested map
+  # entries with null. Enables faithful dry-run replay of numeric and
+  # boolean threshold policies on /v1/admin/policies/dry-run while
+  # keeping free-form text (recipients, memos, addresses) out of the
+  # audit log. "raw" persists values verbatim and is intended only for
+  # trusted internal deployments — most production installs should
+  # NOT use it. Independent of auditPersist; you can persist keys-only
+  # by leaving this empty even with auditPersist=true.
+  auditArgValues: ""
+
   # -- Human-approval queue. Backs the gateway's "escalate" decision
   # path (Rego policy returns escalate -> gateway pauses the call ->
   # operator approves/rejects in the console).
