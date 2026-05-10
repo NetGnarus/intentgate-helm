@@ -55,6 +55,64 @@ gateway:
   # this in tandem with postgresUrl.
   auditPersist: false
 
+  # -- SIEM forwarders. Each block is independent: enable as many or
+  # as few as you need. Events are also still emitted to stdout (and,
+  # when auditPersist is on, to Postgres); SIEM emitters are
+  # additional sinks via the gateway's audit fan-out. Failures on one
+  # destination never block the request path or the other emitters.
+  siem:
+    splunk:
+      # HEC endpoint URL, e.g. "https://splunk.example.com:8088/services/collector".
+      # Empty disables the Splunk emitter.
+      url: ""
+      # HEC token. Provide one of:
+      #   token:                 "<token>"  (chart writes it into a Secret)
+      #   existingTokenSecret:   "<name>"   (chart references an existing Secret)
+      token: ""
+      existingTokenSecret: ""
+      tokenSecretKey: splunk-token
+      # Optional Splunk index. Empty routes to the token's default.
+      index: ""
+    datadog:
+      # API key. Empty disables the Datadog emitter. Provide one of:
+      #   apiKey:                "<key>"   (chart writes it into a Secret)
+      #   existingApiKeySecret:  "<name>"  (chart references an existing Secret)
+      apiKey: ""
+      existingApiKeySecret: ""
+      apiKeySecretKey: datadog-api-key
+      # Regional Datadog site. Default "datadoghq.com" (US1). Other
+      # values: "datadoghq.eu", "us3.datadoghq.com", "us5.datadoghq.com",
+      # "ap1.datadoghq.com".
+      site: ""
+      # The "service" tag stamped on every event. Empty -> "intentgate-gateway".
+      service: ""
+    sentinel:
+      # Microsoft Sentinel via the Azure Monitor Logs Ingestion API.
+      # All six fields below are required together; leaving any empty
+      # disables the Sentinel emitter (or fails fast if some are set
+      # and some aren't).
+      #
+      # dceUrl: Data Collection Endpoint URL, e.g.
+      #   "https://intentgate-dce-abc1.eastus-1.ingest.monitor.azure.com"
+      dceUrl: ""
+      # dcrImmutableId: immutable ID of the Data Collection Rule that
+      # routes the stream into the Log Analytics workspace.
+      dcrImmutableId: ""
+      # streamName: custom-table stream the DCR exposes, e.g.
+      #   "Custom-IntentGate_CL"
+      streamName: ""
+      # Azure AD tenant ID owning the service principal.
+      tenantId: ""
+      # Service-principal client ID (the "Application (client) ID"
+      # field in the Azure portal).
+      clientId: ""
+      # Service-principal client secret. Provide one of:
+      #   clientSecret:                "<secret>" (chart writes a Secret)
+      #   existingClientSecretSecret:  "<name>"   (chart references existing)
+      clientSecret: ""
+      existingClientSecretSecret: ""
+      clientSecretSecretKey: sentinel-client-secret
+
   # Master key for capability tokens. Provide one of:
   #   masterKey:      "<base64url string>"  (chart writes it into a Secret)
   #   existingSecret: "<name>"              (chart references an existing Secret)

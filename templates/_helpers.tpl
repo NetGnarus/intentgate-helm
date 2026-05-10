@@ -139,6 +139,34 @@ Postgres URL Secret name (used by the revocation store).
 {{- end -}}
 
 {{/*
+SIEM Secret names. Same chart-managed-vs-existing pattern as the
+other Secret helpers.
+*/}}
+{{- define "intentgate.splunkTokenSecretName" -}}
+{{- if .Values.gateway.siem.splunk.existingTokenSecret -}}
+{{- .Values.gateway.siem.splunk.existingTokenSecret -}}
+{{- else -}}
+{{- printf "%s-splunk-token" (include "intentgate.gateway.fullname" .) -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "intentgate.datadogApiKeySecretName" -}}
+{{- if .Values.gateway.siem.datadog.existingApiKeySecret -}}
+{{- .Values.gateway.siem.datadog.existingApiKeySecret -}}
+{{- else -}}
+{{- printf "%s-datadog-api-key" (include "intentgate.gateway.fullname" .) -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "intentgate.sentinelClientSecretSecretName" -}}
+{{- if .Values.gateway.siem.sentinel.existingClientSecretSecret -}}
+{{- .Values.gateway.siem.sentinel.existingClientSecretSecret -}}
+{{- else -}}
+{{- printf "%s-sentinel-client-secret" (include "intentgate.gateway.fullname" .) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Resolved image references. Empty tag falls through to .Chart.AppVersion
 so a chart upgrade tracks the appVersion bump automatically.
 */}}

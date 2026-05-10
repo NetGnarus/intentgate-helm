@@ -51,6 +51,51 @@ spec:
             - name: INTENTGATE_AUDIT_PERSIST
               value: "true"
             {{- end }}
+            {{- if .Values.gateway.siem.splunk.url }}
+            - name: INTENTGATE_SIEM_SPLUNK_URL
+              value: {{ .Values.gateway.siem.splunk.url | quote }}
+            - name: INTENTGATE_SIEM_SPLUNK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "intentgate.splunkTokenSecretName" . }}
+                  key: {{ .Values.gateway.siem.splunk.tokenSecretKey }}
+            {{- if .Values.gateway.siem.splunk.index }}
+            - name: INTENTGATE_SIEM_SPLUNK_INDEX
+              value: {{ .Values.gateway.siem.splunk.index | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if or .Values.gateway.siem.datadog.apiKey .Values.gateway.siem.datadog.existingApiKeySecret }}
+            - name: INTENTGATE_SIEM_DATADOG_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "intentgate.datadogApiKeySecretName" . }}
+                  key: {{ .Values.gateway.siem.datadog.apiKeySecretKey }}
+            {{- if .Values.gateway.siem.datadog.site }}
+            - name: INTENTGATE_SIEM_DATADOG_SITE
+              value: {{ .Values.gateway.siem.datadog.site | quote }}
+            {{- end }}
+            {{- if .Values.gateway.siem.datadog.service }}
+            - name: INTENTGATE_SIEM_DATADOG_SERVICE
+              value: {{ .Values.gateway.siem.datadog.service | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.gateway.siem.sentinel.dceUrl }}
+            - name: INTENTGATE_SIEM_SENTINEL_DCE_URL
+              value: {{ .Values.gateway.siem.sentinel.dceUrl | quote }}
+            - name: INTENTGATE_SIEM_SENTINEL_DCR_ID
+              value: {{ .Values.gateway.siem.sentinel.dcrImmutableId | quote }}
+            - name: INTENTGATE_SIEM_SENTINEL_STREAM
+              value: {{ .Values.gateway.siem.sentinel.streamName | quote }}
+            - name: INTENTGATE_SIEM_SENTINEL_TENANT_ID
+              value: {{ .Values.gateway.siem.sentinel.tenantId | quote }}
+            - name: INTENTGATE_SIEM_SENTINEL_CLIENT_ID
+              value: {{ .Values.gateway.siem.sentinel.clientId | quote }}
+            - name: INTENTGATE_SIEM_SENTINEL_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "intentgate.sentinelClientSecretSecretName" . }}
+                  key: {{ .Values.gateway.siem.sentinel.clientSecretSecretKey }}
+            {{- end }}
             {{- if .Values.extractor.enabled }}
             - name: INTENTGATE_EXTRACTOR_URL
               value: "http://{{ include "intentgate.extractor.fullname" . }}:{{ .Values.extractor.service.port }}"

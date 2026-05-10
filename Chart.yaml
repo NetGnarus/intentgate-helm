@@ -9,15 +9,16 @@ type: application
 
 # Chart version follows semver and is independent of appVersion.
 # Bump on chart-shape changes; bump appVersion on gateway image bumps.
-version: 0.1.4
+version: 0.1.5
 
 # The gateway/extractor image tag this chart's defaults reference.
-# v0.5.0 = gateway with optional Postgres-backed audit-event
-# persistence + a queryable /v1/admin/audit endpoint, on top of
-# v0.4's metrics/tracing surface.
+# v0.6.0 = gateway with SIEM forwarders (Splunk HEC, Datadog Logs
+# Intake, Microsoft Sentinel via Logs Ingestion API) plus a
+# /v1/admin/integrations status endpoint, on top of v0.5's audit
+# persistence.
 # Extractor stays on 0.1.0 (no new release yet); pinned in values.yaml's
 # extractor.image.tag.
-appVersion: "0.5.0"
+appVersion: "0.6.0"
 
 home: https://github.com/NetGnarus/intentgate-gateway
 sources:
