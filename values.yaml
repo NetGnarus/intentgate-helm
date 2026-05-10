@@ -137,12 +137,36 @@ gateway:
 
   # Admin token guarding the gateway's /v1/admin/* endpoints (token
   # revocation, revocation list). Same shape as masterKey: provide
-  # inline OR reference an existing Secret. If both are empty, the
-  # admin endpoints are not registered (404s); the operator must use
-  # `igctl revoke` only after configuring this.
+  # inline OR reference an existing Secret. If both are empty AND
+  # tenantAdmins is empty, admin endpoints are not registered.
+  #
+  # This is the SUPERADMIN: holders see and operate on every tenant.
+  # Use tenantAdmins below for per-tenant scoped operators.
   adminToken: ""
   existingAdminTokenSecret: ""
   adminTokenSecretKey: admin-token
+
+  # Per-tenant admin tokens (multi-tenant deployments). Each entry
+  # scopes ALL admin operations to a single tenant: mint stamps it,
+  # revoke writes it, list filters it, audit query forces the
+  # filter, approvals decide rejects cross-tenant ids as 404.
+  #
+  # Format on the wire: "tenant1:token1,tenant2:token2". The chart
+  # renders this from either a string or a list of {tenant, token}
+  # pairs (see below).
+  #
+  # Examples:
+  #   tenantAdmins: "acme:abc123,globex:def456"
+  # OR (more readable for several tenants):
+  #   tenantAdminsList:
+  #     - tenant: acme
+  #       token: abc123
+  #     - tenant: globex
+  #       existingSecretName: globex-admin-token
+  #       existingSecretKey: token
+  #
+  # When both are empty, only the superadmin can hit /v1/admin/*.
+  tenantAdmins: ""
 
   # Observability. Both off by default — production deploys flip them on.
   metrics:

@@ -59,6 +59,10 @@ spec:
             - name: INTENTGATE_APPROVAL_TIMEOUT_S
               value: {{ .Values.gateway.approvalTimeoutSeconds | quote }}
             {{- end }}
+            {{- if .Values.gateway.tenantAdmins }}
+            - name: INTENTGATE_TENANT_ADMINS
+              value: {{ .Values.gateway.tenantAdmins | quote }}
+            {{- end }}
             {{- if .Values.gateway.siem.splunk.url }}
             - name: INTENTGATE_SIEM_SPLUNK_URL
               value: {{ .Values.gateway.siem.splunk.url | quote }}
