@@ -47,6 +47,10 @@ spec:
               value: {{ .Values.gateway.requireBudget | quote }}
             - name: INTENTGATE_AUDIT_TARGET
               value: {{ .Values.gateway.auditTarget | quote }}
+            {{- if .Values.gateway.auditPersist }}
+            - name: INTENTGATE_AUDIT_PERSIST
+              value: "true"
+            {{- end }}
             {{- if .Values.extractor.enabled }}
             - name: INTENTGATE_EXTRACTOR_URL
               value: "http://{{ include "intentgate.extractor.fullname" . }}:{{ .Values.extractor.service.port }}"

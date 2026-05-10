@@ -46,6 +46,14 @@ gateway:
   # -- Audit destination. "stdout" emits one JSON event per line on
   # the container stdout; "none" disables emission.
   auditTarget: stdout
+  # -- When true, every audit event is also persisted into the same
+  # Postgres referenced by .Values.postgresUrl (or its Secret form).
+  # Enables the GET /v1/admin/audit query endpoint that powers the
+  # console's audit-log viewer and the Pro compliance pack's "live
+  # gateway query" mode. No-op when no Postgres URL is configured —
+  # the gateway refuses to start in that misconfigured state, so set
+  # this in tandem with postgresUrl.
+  auditPersist: false
 
   # Master key for capability tokens. Provide one of:
   #   masterKey:      "<base64url string>"  (chart writes it into a Secret)

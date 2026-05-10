@@ -9,14 +9,15 @@ type: application
 
 # Chart version follows semver and is independent of appVersion.
 # Bump on chart-shape changes; bump appVersion on gateway image bumps.
-version: 0.1.3
+version: 0.1.4
 
 # The gateway/extractor image tag this chart's defaults reference.
-# v0.4.0 = gateway with Prometheus /metrics + OpenTelemetry tracing,
-# on top of the v0.3 revocation/admin API surface.
+# v0.5.0 = gateway with optional Postgres-backed audit-event
+# persistence + a queryable /v1/admin/audit endpoint, on top of
+# v0.4's metrics/tracing surface.
 # Extractor stays on 0.1.0 (no new release yet); pinned in values.yaml's
 # extractor.image.tag.
-appVersion: "0.4.0"
+appVersion: "0.5.0"
 
 home: https://github.com/NetGnarus/intentgate-gateway
 sources:
