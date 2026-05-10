@@ -55,6 +55,17 @@ gateway:
   # this in tandem with postgresUrl.
   auditPersist: false
 
+  # -- Human-approval queue. Backs the gateway's "escalate" decision
+  # path (Rego policy returns escalate -> gateway pauses the call ->
+  # operator approves/rejects in the console).
+  #   "memory"   in-process queue, single replica only.
+  #   "postgres" durable queue at .Values.postgresUrl.
+  #   "off"      escalate decisions become block.
+  approvalsBackend: memory
+  # -- Seconds the gateway waits for a human decision before timing
+  # out and returning block to the agent. Default 300 (5 minutes).
+  approvalTimeoutSeconds: 300
+
   # -- SIEM forwarders. Each block is independent: enable as many or
   # as few as you need. Events are also still emitted to stdout (and,
   # when auditPersist is on, to Postgres); SIEM emitters are

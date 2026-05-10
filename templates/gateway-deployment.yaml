@@ -51,6 +51,14 @@ spec:
             - name: INTENTGATE_AUDIT_PERSIST
               value: "true"
             {{- end }}
+            {{- if .Values.gateway.approvalsBackend }}
+            - name: INTENTGATE_APPROVALS_BACKEND
+              value: {{ .Values.gateway.approvalsBackend | quote }}
+            {{- end }}
+            {{- if .Values.gateway.approvalTimeoutSeconds }}
+            - name: INTENTGATE_APPROVAL_TIMEOUT_S
+              value: {{ .Values.gateway.approvalTimeoutSeconds | quote }}
+            {{- end }}
             {{- if .Values.gateway.siem.splunk.url }}
             - name: INTENTGATE_SIEM_SPLUNK_URL
               value: {{ .Values.gateway.siem.splunk.url | quote }}
