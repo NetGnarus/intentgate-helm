@@ -9,19 +9,19 @@ type: application
 
 # Chart version follows semver and is independent of appVersion.
 # Bump on chart-shape changes; bump appVersion on gateway image bumps.
-version: 0.2.1
+version: 0.3.0
 
 # The gateway/extractor image tag this chart's defaults reference.
-# v1.0.1 = security follow-up to 1.0.0: revoked_tokens primary key
-# becomes (jti, tenant) and IsRevoked is tenant-aware. Closes a
-# cross-tenant denial-of-service vector in 1.0 where any per-tenant
-# admin could revoke any JTI and the tenant-blind hot path would
-# honor it across every tenant. Superadmin revocations (tenant="")
-# still apply globally. Schema migration is idempotent and safe to
-# replay against an already-migrated DB.
+# v1.1.0 = multi-tenant slice 3 of 3: GET /v1/admin/tenants surfaces
+# configured per-tenant admin scopes so the console can populate a
+# tenant switcher (the v1.0.1 hot-path isolation is what makes this
+# safe to expose). Superadmins see every tenant; per-tenant admins
+# see only their own. Older consoles get 404 and degrade gracefully
+# to a single-tenant view. Everything from 1.0.1 still applies:
+# revoked_tokens (jti, tenant) PK, tenant-aware IsRevoked.
 # Extractor stays on 0.1.0 (no new release yet); pinned in values.yaml's
 # extractor.image.tag.
-appVersion: "1.0.1"
+appVersion: "1.1.0"
 
 home: https://github.com/NetGnarus/intentgate-gateway
 sources:
