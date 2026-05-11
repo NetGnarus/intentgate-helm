@@ -179,3 +179,23 @@ so a chart upgrade tracks the appVersion bump automatically.
 {{- $tag := default .Chart.AppVersion .Values.extractor.image.tag -}}
 {{- printf "%s:%s" .Values.extractor.image.repository $tag -}}
 {{- end -}}
+
+{{/*
+Demo upstream (toolserver) helpers — fullname / matchLabels / image.
+Lives behind .Values.demoUpstream.enabled; when off, none of the
+demo-upstream-*.yaml templates render.
+*/}}
+{{- define "intentgate.demoUpstream.fullname" -}}
+{{- printf "%s-demo-upstream" (include "intentgate.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "intentgate.demoUpstream.matchLabels" -}}
+app.kubernetes.io/name: {{ include "intentgate.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: demo-upstream
+{{- end -}}
+
+{{- define "intentgate.demoUpstream.image" -}}
+{{- $tag := default "0.1.0" .Values.demoUpstream.image.tag -}}
+{{- printf "%s:%s" .Values.demoUpstream.image.repository $tag -}}
+{{- end -}}

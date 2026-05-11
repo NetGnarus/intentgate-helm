@@ -9,20 +9,19 @@ type: application
 
 # Chart version follows semver and is independent of appVersion.
 # Bump on chart-shape changes; bump appVersion on gateway image bumps.
-# 0.5.3 is an appVersion-only bump to 1.5.1 (DELETE /v1/admin/policies/active
-# endpoint + console-pro per-tenant scope UI). No new chart values,
-# no template changes — additive convenience surface on top of v1.5.0.
-version: 0.5.3
+# 0.6.0 adds an optional demoUpstream block that deploys the
+# demo tool server alongside the gateway and wires
+# INTENTGATE_UPSTREAM_URL automatically. Minor chart bump because
+# it's a new value block + two new templates (additive, default off
+# — existing deployments unchanged).
+version: 0.6.0
 
 # The gateway/extractor image tag this chart's defaults reference.
-# v1.5.1 = DELETE /v1/admin/policies/active endpoint. A per-tenant
-# admin can now clear their tenant's slot in one call so subsequent
-# requests fall back to the default-fallback policy, instead of
-# rolling back through every previous draft. The default-fallback
-# slot itself is protected (DeleteActive("") is a no-op so the
-# gateway always has SOMETHING to serve). Cross-replica refresh
-# carries the clear signal via the existing LISTEN/NOTIFY path.
-# Everything from v1.5.0 still applies. Extractor stays on 0.1.0.
+# v1.5.1 unchanged from chart 0.5.3 — the demoUpstream block in
+# 0.6.0 doesn't require a gateway code change (it just wires the
+# existing INTENTGATE_UPSTREAM_URL env var to a chart-managed
+# tool server). Demo upstream image:
+#   ghcr.io/netgnarus/intentgate-demo-toolserver:0.1.0
 appVersion: "1.5.1"
 
 home: https://github.com/NetGnarus/intentgate-gateway

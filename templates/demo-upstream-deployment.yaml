@@ -1,0 +1,84 @@
+{{- if .Values.demoUpstream.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "intentgate.demoUpstream.fullname" . }}
+  labels:
+    {{- include "intentgate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: demo-upstream
+  annotations:
+    intentgate.io/purpose: |
+      Demo-only tool server for end-to-end IntentGate demos.
+      NOT for production use; produces synthetic data only.
+spec:
+  replicas: {{ .Values.demoUpstream.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "intentgate.demoUpstream.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "intentgate.labels" . | nindent 8 }}
+        app.kubernetes.io/component: demo-upstream
+        {{- with .Values.demoUpstream.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.demoUpstream.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "intentgate.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: demo-upstream
+          image: {{ include "intentgate.demoUpstream.image" . | quote }}
+          imagePullPolicy: {{ .Values.demoUpstream.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8090
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 1
+            periodSeconds: 5
+            timeoutSeconds: 2
+          resources:
+            {{- toYaml .Values.demoUpstream.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            # 1001 matches the `useradd --system --uid 1001 toolserver`
+            # in the demo toolserver's Dockerfile. Explicit uid lets the
+            # kubelet validate runAsNonRoot under k3s' Pod Security
+            # Standards "restricted" profile.
+            runAsUser: 1001
+            runAsGroup: 1001
+            capabilities:
+              drop: ["ALL"]
+      {{- with .Values.demoUpstream.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.demoUpstream.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.demoUpstream.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end -}}

@@ -293,6 +293,51 @@ extractor:
   affinity: {}
 
 # -----------------------------------------------------------------------
+# Demo upstream tool server (optional, for end-to-end demos)
+# -----------------------------------------------------------------------
+# A minimal HTTP-JSON-RPC tool server that the gateway forwards to as
+# INTENTGATE_UPSTREAM_URL, so /v1/mcp returns real tool results
+# instead of the "stub: no upstream configured" placeholder. Three
+# mock tools (read_invoice, list_customers, transfer_funds) backed by
+# fixture data. NOT for production — real deployments point the
+# gateway at their own tool server via .Values.gateway.upstreamUrl
+# instead. Default off so existing deployments are unchanged.
+#
+# When enabled:
+#   - The toolserver Deployment + Service are created in the same
+#     namespace.
+#   - The gateway-deployment's INTENTGATE_UPSTREAM_URL is wired to
+#     http://<release>-demo-upstream:8090, overriding any explicit
+#     gateway.upstreamUrl value (the demo upstream wins when enabled).
+demoUpstream:
+  enabled: false
+
+  replicaCount: 1
+
+  image:
+    repository: ghcr.io/netgnarus/intentgate-demo-toolserver
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8090
+
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# -----------------------------------------------------------------------
 # Cross-cutting
 # -----------------------------------------------------------------------
 

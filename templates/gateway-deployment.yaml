@@ -63,6 +63,22 @@ spec:
             - name: INTENTGATE_POLICY_STORE
               value: {{ .Values.gateway.policyStore | quote }}
             {{- end }}
+            {{- if .Values.demoUpstream.enabled }}
+            # Demo upstream tool server (chart-managed). Overrides
+            # any operator-supplied gateway.upstreamUrl when enabled
+            # — the demo deployment shape assumes the toolserver IS
+            # the upstream. For production: leave demoUpstream off
+            # and point gateway.upstreamUrl at your real tool server.
+            #
+            # `dig` with a default of 8090 keeps this robust under
+            # `helm upgrade --reuse-values --set demoUpstream.enabled=true`,
+            # which would otherwise nil-pointer because --reuse-values
+            # carries forward the old release's values map (no
+            # demoUpstream block) instead of merging the new chart's
+            # demoUpstream defaults.
+            - name: INTENTGATE_UPSTREAM_URL
+              value: "http://{{ include "intentgate.demoUpstream.fullname" . }}:{{ dig "service" "port" 8090 .Values.demoUpstream }}"
+            {{- end }}
             {{- if .Values.gateway.approvalTimeoutSeconds }}
             - name: INTENTGATE_APPROVAL_TIMEOUT_S
               value: {{ .Values.gateway.approvalTimeoutSeconds | quote }}
