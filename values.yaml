@@ -70,6 +70,26 @@ gateway:
   # by leaving this empty even with auditPersist=true.
   auditArgValues: ""
 
+  # -- Policy store backend for the draft + active-pointer + rollback
+  # endpoints on /v1/admin/policies/* (gateway 1.4+).
+  #   "off"      No draft endpoints registered. Behavior identical to
+  #              gateway <1.4. The /policies page in console-pro keeps
+  #              the AI + dry-run sections but renders a "feature not
+  #              enabled" notice in the drafts panel.
+  #   "memory"   In-process draft store. Drafts are lost on restart;
+  #              the active-pointer is forgotten. Single-replica only.
+  #              Fine for dev / smoke-test deployments; not for prod.
+  #   "postgres" Durable, multi-replica-safe store at
+  #              .Values.postgresUrl. Promotions survive gateway
+  #              restarts (the gateway re-compiles the promoted draft
+  #              into its policy engine on startup). The production
+  #              default once a Postgres URL is configured.
+  # Promote and rollback are SUPERADMIN-only operations — per-tenant
+  # admins can author and list drafts in their tenant, but the gateway
+  # runs a single global policy engine in v1.4 so flipping it is
+  # reserved to the superadmin token.
+  policyStore: "off"
+
   # -- Human-approval queue. Backs the gateway's "escalate" decision
   # path (Rego policy returns escalate -> gateway pauses the call ->
   # operator approves/rejects in the console).
