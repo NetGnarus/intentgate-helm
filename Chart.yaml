@@ -9,22 +9,27 @@ type: application
 
 # Chart version follows semver and is independent of appVersion.
 # Bump on chart-shape changes; bump appVersion on gateway image bumps.
-# 0.5.1 is an appVersion-only bump to 1.4.1 (cross-replica policy
-# refresh via Postgres LISTEN/NOTIFY); no new chart values, no
-# template changes.
-version: 0.5.1
+# 0.5.2 is an appVersion-only bump to 1.5.0 (per-tenant active
+# policies). No new chart values, no template changes — the
+# behavior activates automatically when gateway.policyStore is set;
+# per-tenant admins now use their existing INTENTGATE_TENANT_ADMINS
+# tokens to promote within their tenant.
+version: 0.5.2
 
 # The gateway/extractor image tag this chart's defaults reference.
-# v1.4.1 = cross-replica policy refresh: a promote/rollback on one
-# replica propagates to every other replica's compiled engine within
-# ~1 second via Postgres LISTEN/NOTIFY, with a 5-second polling
-# fallback that catches notifications missed during a listener
-# reconnect window. Multi-replica gateways no longer need a pod
-# recycle to pick up a promote. No operator action required — the
-# behavior activates automatically when gateway.policyStore=postgres.
-# Everything from v1.4.0 still applies; v1.3.0 audit schema v4 still
-# applies. Extractor stays on 0.1.0 (no new release).
-appVersion: "1.4.1"
+# v1.5.0 = per-tenant active policies. The policy_active table
+# moves from a single 'global' row to one row per tenant; the
+# Reloader holds a map of compiled engines and dispatches each
+# request to the right one based on the verified capability
+# token's tenant claim. Per-tenant admins promote within their
+# own tenant (the v1.4 superadmin-only restriction is removed).
+# Tenants without their own promoted policy fall back to the
+# default slot — preserves v1.4 single-tenant semantics.
+# Schema migration is automatic (idempotent ALTER + PK swap on
+# startup); the existing 'global' row backfills to tenant=''.
+# Everything from v1.4 still applies (cross-replica refresh via
+# LISTEN/NOTIFY, draft CRUD, etc.). Extractor stays on 0.1.0.
+appVersion: "1.5.0"
 
 home: https://github.com/NetGnarus/intentgate-gateway
 sources:
