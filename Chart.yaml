@@ -9,27 +9,21 @@ type: application
 
 # Chart version follows semver and is independent of appVersion.
 # Bump on chart-shape changes; bump appVersion on gateway image bumps.
-# 0.5.2 is an appVersion-only bump to 1.5.0 (per-tenant active
-# policies). No new chart values, no template changes — the
-# behavior activates automatically when gateway.policyStore is set;
-# per-tenant admins now use their existing INTENTGATE_TENANT_ADMINS
-# tokens to promote within their tenant.
-version: 0.5.2
+# 0.5.3 is an appVersion-only bump to 1.5.1 (DELETE /v1/admin/policies/active
+# endpoint + console-pro per-tenant scope UI). No new chart values,
+# no template changes — additive convenience surface on top of v1.5.0.
+version: 0.5.3
 
 # The gateway/extractor image tag this chart's defaults reference.
-# v1.5.0 = per-tenant active policies. The policy_active table
-# moves from a single 'global' row to one row per tenant; the
-# Reloader holds a map of compiled engines and dispatches each
-# request to the right one based on the verified capability
-# token's tenant claim. Per-tenant admins promote within their
-# own tenant (the v1.4 superadmin-only restriction is removed).
-# Tenants without their own promoted policy fall back to the
-# default slot — preserves v1.4 single-tenant semantics.
-# Schema migration is automatic (idempotent ALTER + PK swap on
-# startup); the existing 'global' row backfills to tenant=''.
-# Everything from v1.4 still applies (cross-replica refresh via
-# LISTEN/NOTIFY, draft CRUD, etc.). Extractor stays on 0.1.0.
-appVersion: "1.5.0"
+# v1.5.1 = DELETE /v1/admin/policies/active endpoint. A per-tenant
+# admin can now clear their tenant's slot in one call so subsequent
+# requests fall back to the default-fallback policy, instead of
+# rolling back through every previous draft. The default-fallback
+# slot itself is protected (DeleteActive("") is a no-op so the
+# gateway always has SOMETHING to serve). Cross-replica refresh
+# carries the clear signal via the existing LISTEN/NOTIFY path.
+# Everything from v1.5.0 still applies. Extractor stays on 0.1.0.
+appVersion: "1.5.1"
 
 home: https://github.com/NetGnarus/intentgate-gateway
 sources:
