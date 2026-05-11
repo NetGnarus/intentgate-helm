@@ -9,19 +9,22 @@ type: application
 
 # Chart version follows semver and is independent of appVersion.
 # Bump on chart-shape changes; bump appVersion on gateway image bumps.
-# 0.5.0 adds the gateway.policyStore value (wires the draft-policies
-# CRUD + active-pointer + rollback endpoints in gateway v1.4 into the
-# deployment env).
-version: 0.5.0
+# 0.5.1 is an appVersion-only bump to 1.4.1 (cross-replica policy
+# refresh via Postgres LISTEN/NOTIFY); no new chart values, no
+# template changes.
+version: 0.5.1
 
 # The gateway/extractor image tag this chart's defaults reference.
-# v1.4.0 = draft-policies CRUD, active-pointer, one-step rollback,
-# in-process runtime reload on promote. Console-pro /policies gets
-# "Save as draft" + drafts panel + promote/rollback. Everything from
-# v1.3 still applies (audit schema v4 with opt-in argument-value
-# persistence). Extractor stays on 0.1.0 (no new release yet); pinned
-# in values.yaml's extractor.image.tag.
-appVersion: "1.4.0"
+# v1.4.1 = cross-replica policy refresh: a promote/rollback on one
+# replica propagates to every other replica's compiled engine within
+# ~1 second via Postgres LISTEN/NOTIFY, with a 5-second polling
+# fallback that catches notifications missed during a listener
+# reconnect window. Multi-replica gateways no longer need a pod
+# recycle to pick up a promote. No operator action required — the
+# behavior activates automatically when gateway.policyStore=postgres.
+# Everything from v1.4.0 still applies; v1.3.0 audit schema v4 still
+# applies. Extractor stays on 0.1.0 (no new release).
+appVersion: "1.4.1"
 
 home: https://github.com/NetGnarus/intentgate-gateway
 sources:
