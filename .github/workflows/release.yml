@@ -38,7 +38,7 @@ jobs:
           echo "bare=$bare" >> "$GITHUB_OUTPUT"
 
       - name: Install Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@v5
         with:
           version: v3.17.0
 
