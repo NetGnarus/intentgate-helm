@@ -9,20 +9,22 @@ type: application
 
 # Chart version follows semver and is independent of appVersion.
 # Bump on chart-shape changes; bump appVersion on gateway image bumps.
-# 0.6.0 adds an optional demoUpstream block that deploys the
-# demo tool server alongside the gateway and wires
-# INTENTGATE_UPSTREAM_URL automatically. Minor chart bump because
-# it's a new value block + two new templates (additive, default off
-# — existing deployments unchanged).
-version: 0.6.0
+# 0.6.1 is a patch bump that wraps gateway v1.6.1 — no template
+# or values changes, just the default image tag advancing. Pulls in
+# the three Postgres-backend fixes shipped in gateway 1.6.1
+# (fresh-install policy_active PK, audit verify timestamp truncation,
+# escalate-event canonical hash columns). Deployments using
+# in-memory backends are unaffected but should still upgrade for
+# consistency. See gateway v1.6.1 release notes for details:
+#   https://github.com/NetGnarus/intentgate-gateway/releases/tag/v1.6.1
+version: 0.6.1
 
-# The gateway/extractor image tag this chart's defaults reference.
-# v1.5.1 unchanged from chart 0.5.3 — the demoUpstream block in
-# 0.6.0 doesn't require a gateway code change (it just wires the
-# existing INTENTGATE_UPSTREAM_URL env var to a chart-managed
-# tool server). Demo upstream image:
+# The gateway image tag this chart's defaults reference. Extractor
+# stays pinned to its own released tag in values.yaml (0.1.0, unchanged
+# this cycle). Demo-upstream image (from 0.6.0's demoUpstream block)
+# also unchanged at 0.1.0:
 #   ghcr.io/netgnarus/intentgate-demo-toolserver:0.1.0
-appVersion: "1.5.1"
+appVersion: "1.6.1"
 
 home: https://github.com/NetGnarus/intentgate-gateway
 sources:
